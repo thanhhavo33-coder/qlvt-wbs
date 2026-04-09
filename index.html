@@ -3,28 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <title>Seat Management VIB</title>
+
 <style>
-  body { font-family: Arial; margin: 0; }
-  #container { position: relative; }
-  #map { width: 100%; display: block; }
-  .seat {
-    position: absolute;
-    background: #2ecc71;
-    color: #fff;
-    padding: 2px 5px;
-    font-size: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
+body { font-family: Arial; margin: 0; }
+
+#toolbar {
+  padding: 10px;
+  background: #f5f5f5;
+}
+
+#container {
+  position: relative;
+}
+
+#map {
+  width: 100%;
+}
+
+.seat {
+  position: absolute;
+  background: #2ecc71;
+  color: #fff;
+  padding: 2px 6px;
+  font-size: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.highlight {
+  background: red !important;
+}
 </style>
 </head>
 
 <body>
 
-<h3 style="padding:10px">Quản lý chỗ ngồi</h3>
+<div id="toolbar">
+  <input id="searchInput" placeholder="Nhập tên hoặc mã seat..." style="padding:5px;width:250px">
+  <button onclick="searchSeat()">🔍 Tìm</button>
+</div>
 
 <div id="container">
-  <!-- 🔥 THAY link ảnh của bạn -->
+  <!-- 🔥 thay bằng ảnh của bạn -->
   <img id="map" src="floor.png">
 </div>
 
@@ -34,7 +54,7 @@ const API_KEY = "YOUR_API_KEY";
 
 let seats = [];
 
-// 🧠 LOAD DATA
+// ================= LOAD =================
 async function loadData() {
   try {
     const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
@@ -43,12 +63,12 @@ async function loadData() {
     const json = await res.json();
     seats = json.record.data || [];
     renderSeats();
-  } catch(e) {
-    console.log("load error");
+  } catch (e) {
+    console.log("Load lỗi");
   }
 }
 
-// 🧠 SAVE DATA
+// ================= SAVE =================
 async function saveData() {
   await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
     method: "PUT",
@@ -60,7 +80,7 @@ async function saveData() {
   });
 }
 
-// 🎯 RENDER
+// ================= RENDER =================
 function renderSeats() {
   document.querySelectorAll(".seat").forEach(e => e.remove());
 
@@ -77,7 +97,7 @@ function renderSeats() {
   });
 }
 
-// 🎯 CLICK MAP → ADD
+// ================= CLICK MAP =================
 document.getElementById("map").onclick = function(e) {
   const x = e.offsetX;
   const y = e.offsetY;
@@ -99,7 +119,7 @@ document.getElementById("map").onclick = function(e) {
   renderSeats();
 };
 
-// 🎯 EDIT
+// ================= EDIT =================
 function editSeat(seat) {
   const user = prompt("User:", seat.user);
   if (user !== null) seat.user = user;
@@ -112,6 +132,28 @@ function editSeat(seat) {
 
   saveData();
   alert("✅ Đã lưu");
+}
+
+// ================= SEARCH =================
+function searchSeat() {
+  const keyword = document.getElementById("searchInput").value.toLowerCase();
+  let found = false;
+
+  document.querySelectorAll(".seat").forEach(el => {
+    const seatId = el.innerText.toLowerCase();
+    const seatData = seats.find(s => s.id === el.innerText);
+    const user = seatData?.user?.toLowerCase() || "";
+
+    if (seatId.includes(keyword) || user.includes(keyword)) {
+      el.classList.add("highlight");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      found = true;
+    } else {
+      el.classList.remove("highlight");
+    }
+  });
+
+  if (!found) alert("❌ Không tìm thấy");
 }
 
 // INIT
